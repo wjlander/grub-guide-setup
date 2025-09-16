@@ -31,10 +31,6 @@ interface SharedRecipe {
     image_url?: string;
     tags?: string[];
   };
-  profile?: {
-    first_name?: string;
-    last_name?: string;
-  };
 }
 
 interface RecipeComment {
@@ -42,10 +38,6 @@ interface RecipeComment {
   comment: string;
   created_at: string;
   user_id: string;
-  profile?: {
-    first_name?: string;
-    last_name?: string;
-  };
 }
 
 export function RecipeSharingCommunity() {
@@ -68,8 +60,7 @@ export function RecipeSharingCommunity() {
       .from('shared_recipes')
       .select(`
         *,
-        recipe:recipes(*),
-        profile:profiles(first_name, last_name)
+        recipe:recipes(*)
       `)
       .eq('is_public', true)
       .order('created_at', { ascending: false })
@@ -117,8 +108,7 @@ export function RecipeSharingCommunity() {
       .from('shared_recipes')
       .select(`
         *,
-        recipe:recipes(*),
-        profile:profiles(first_name, last_name)
+        recipe:recipes(*)
       `)
       .eq('featured', true)
       .eq('is_public', true)
@@ -155,8 +145,7 @@ export function RecipeSharingCommunity() {
     const { data, error } = await supabase
       .from('recipe_comments')
       .select(`
-        *,
-        profile:profiles(first_name, last_name)
+        *
       `)
       .eq('shared_recipe_id', sharedRecipeId)
       .is('parent_comment_id', null)
@@ -307,10 +296,7 @@ export function RecipeSharingCommunity() {
   };
 
   const getProfileName = (profile: any) => {
-    if (!profile) return "Anonymous Chef";
-    const firstName = profile.first_name || "";
-    const lastName = profile.last_name || "";
-    return `${firstName} ${lastName}`.trim() || "Anonymous Chef";
+    return "Anonymous Chef"; // Simplified for now since we don't have profiles linked
   };
 
   useEffect(() => {
@@ -417,7 +403,7 @@ export function RecipeSharingCommunity() {
                   <CardContent className="p-4">
                     <h4 className="font-semibold mb-1">{sharedRecipe.recipe.name}</h4>
                     <p className="text-sm text-muted-foreground mb-2">
-                      by {getProfileName(sharedRecipe.profile)}
+                      by {getProfileName(null)}
                     </p>
                     
                     {sharedRecipe.recipe.description && (
@@ -503,7 +489,7 @@ export function RecipeSharingCommunity() {
                 <CardContent className="p-4">
                   <h4 className="font-semibold mb-1">{sharedRecipe.recipe.name}</h4>
                   <p className="text-sm text-muted-foreground mb-2">
-                    by {getProfileName(sharedRecipe.profile)}
+                    by {getProfileName(null)}
                   </p>
                   
                   <div className="flex items-center justify-between">
@@ -607,7 +593,7 @@ export function RecipeSharingCommunity() {
                 
                 <div className="flex items-center justify-between">
                   <p className="text-muted-foreground">
-                    by {getProfileName(selectedRecipe.profile)}
+                    by {getProfileName(null)}
                   </p>
                   
                   <div className="flex items-center gap-2">
@@ -654,7 +640,7 @@ export function RecipeSharingCommunity() {
                       <div key={comment.id} className="border-l-2 border-muted pl-4">
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-medium text-sm">
-                            {getProfileName(comment.profile)}
+                            {getProfileName(null)}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {new Date(comment.created_at).toLocaleDateString()}
