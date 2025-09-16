@@ -74,6 +74,66 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_plan_events: {
+        Row: {
+          created_at: string
+          date: string
+          end_time: string | null
+          id: string
+          meal_plan_id: string | null
+          meal_type: string
+          notes: string | null
+          recipe_id: string | null
+          start_time: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          end_time?: string | null
+          id?: string
+          meal_plan_id?: string | null
+          meal_type: string
+          notes?: string | null
+          recipe_id?: string | null
+          start_time?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          end_time?: string | null
+          id?: string
+          meal_plan_id?: string | null
+          meal_type?: string
+          notes?: string | null
+          recipe_id?: string | null
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plan_events_meal_plan_id_fkey"
+            columns: ["meal_plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_plan_events_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meal_plans: {
         Row: {
           created_at: string | null
@@ -407,9 +467,33 @@ export type Database = {
         }
         Relationships: []
       }
+      shopping_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       shopping_list_items: {
         Row: {
+          actual_cost: number | null
+          category_id: string | null
           created_at: string | null
+          estimated_cost: number | null
           food_item_id: string | null
           id: string
           is_purchased: boolean | null
@@ -421,7 +505,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          actual_cost?: number | null
+          category_id?: string | null
           created_at?: string | null
+          estimated_cost?: number | null
           food_item_id?: string | null
           id?: string
           is_purchased?: boolean | null
@@ -433,7 +520,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          actual_cost?: number | null
+          category_id?: string | null
           created_at?: string | null
+          estimated_cost?: number | null
           food_item_id?: string | null
           id?: string
           is_purchased?: boolean | null
@@ -445,6 +535,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "shopping_list_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "shopping_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shopping_list_items_food_item_id_fkey"
             columns: ["food_item_id"]
@@ -497,7 +594,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_shopping_list_from_meal_plan: {
+        Args: { p_meal_plan_id: string; p_shopping_list_name?: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
