@@ -14,7 +14,484 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      food_items: {
+        Row: {
+          barcode: string | null
+          brand: string | null
+          calories_per_100g: number | null
+          carbs_per_100g: number | null
+          created_at: string | null
+          fat_per_100g: number | null
+          fiber_per_100g: number | null
+          id: string
+          is_public: boolean | null
+          name: string
+          protein_per_100g: number | null
+          serving_size: number | null
+          serving_unit: string | null
+          sodium_per_100g: number | null
+          sugar_per_100g: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          barcode?: string | null
+          brand?: string | null
+          calories_per_100g?: number | null
+          carbs_per_100g?: number | null
+          created_at?: string | null
+          fat_per_100g?: number | null
+          fiber_per_100g?: number | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          protein_per_100g?: number | null
+          serving_size?: number | null
+          serving_unit?: string | null
+          sodium_per_100g?: number | null
+          sugar_per_100g?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          barcode?: string | null
+          brand?: string | null
+          calories_per_100g?: number | null
+          carbs_per_100g?: number | null
+          created_at?: string | null
+          fat_per_100g?: number | null
+          fiber_per_100g?: number | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          protein_per_100g?: number | null
+          serving_size?: number | null
+          serving_unit?: string | null
+          sodium_per_100g?: number | null
+          sugar_per_100g?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meal_plans: {
+        Row: {
+          created_at: string | null
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meals: {
+        Row: {
+          created_at: string | null
+          date: string
+          food_item_id: string | null
+          id: string
+          meal_name: string | null
+          meal_plan_id: string
+          meal_type: string
+          notes: string | null
+          quantity: number | null
+          rating: number | null
+          recipe_id: string | null
+          unit: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          food_item_id?: string | null
+          id?: string
+          meal_name?: string | null
+          meal_plan_id: string
+          meal_type: string
+          notes?: string | null
+          quantity?: number | null
+          rating?: number | null
+          recipe_id?: string | null
+          unit?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          food_item_id?: string | null
+          id?: string
+          meal_name?: string | null
+          meal_plan_id?: string
+          meal_type?: string
+          notes?: string | null
+          quantity?: number | null
+          rating?: number | null
+          recipe_id?: string | null
+          unit?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meals_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meals_meal_plan_id_fkey"
+            columns: ["meal_plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meals_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nutrition_logs: {
+        Row: {
+          calories: number | null
+          carbs: number | null
+          created_at: string | null
+          date: string
+          fat: number | null
+          fiber: number | null
+          id: string
+          meal_id: string | null
+          protein: number | null
+          sodium: number | null
+          sugar: number | null
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          carbs?: number | null
+          created_at?: string | null
+          date: string
+          fat?: number | null
+          fiber?: number | null
+          id?: string
+          meal_id?: string | null
+          protein?: number | null
+          sodium?: number | null
+          sugar?: number | null
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          carbs?: number | null
+          created_at?: string | null
+          date?: string
+          fat?: number | null
+          fiber?: number | null
+          id?: string
+          meal_id?: string | null
+          protein?: number | null
+          sodium?: number | null
+          sugar?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrition_logs_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ready_meals: {
+        Row: {
+          barcode: string | null
+          brand: string | null
+          calories_per_serving: number | null
+          carbs_per_serving: number | null
+          created_at: string | null
+          fat_per_serving: number | null
+          id: string
+          image_url: string | null
+          minimum_stock: number | null
+          name: string
+          protein_per_serving: number | null
+          serving_size: number | null
+          serving_unit: string | null
+          stock_quantity: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          barcode?: string | null
+          brand?: string | null
+          calories_per_serving?: number | null
+          carbs_per_serving?: number | null
+          created_at?: string | null
+          fat_per_serving?: number | null
+          id?: string
+          image_url?: string | null
+          minimum_stock?: number | null
+          name: string
+          protein_per_serving?: number | null
+          serving_size?: number | null
+          serving_unit?: string | null
+          stock_quantity?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          barcode?: string | null
+          brand?: string | null
+          calories_per_serving?: number | null
+          carbs_per_serving?: number | null
+          created_at?: string | null
+          fat_per_serving?: number | null
+          id?: string
+          image_url?: string | null
+          minimum_stock?: number | null
+          name?: string
+          protein_per_serving?: number | null
+          serving_size?: number | null
+          serving_unit?: string | null
+          stock_quantity?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recipe_ingredients: {
+        Row: {
+          created_at: string | null
+          food_item_id: string | null
+          id: string
+          ingredient_name: string | null
+          quantity: number
+          recipe_id: string
+          unit: string
+        }
+        Insert: {
+          created_at?: string | null
+          food_item_id?: string | null
+          id?: string
+          ingredient_name?: string | null
+          quantity: number
+          recipe_id: string
+          unit: string
+        }
+        Update: {
+          created_at?: string | null
+          food_item_id?: string | null
+          id?: string
+          ingredient_name?: string | null
+          quantity?: number
+          recipe_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          cook_time: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          instructions: string | null
+          name: string
+          prep_time: number | null
+          servings: number | null
+          tags: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cook_time?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          instructions?: string | null
+          name: string
+          prep_time?: number | null
+          servings?: number | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cook_time?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          instructions?: string | null
+          name?: string
+          prep_time?: number | null
+          servings?: number | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      shopping_list_items: {
+        Row: {
+          created_at: string | null
+          food_item_id: string | null
+          id: string
+          is_purchased: boolean | null
+          item_name: string
+          quantity: number | null
+          ready_meal_id: string | null
+          shopping_list_id: string
+          unit: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          food_item_id?: string | null
+          id?: string
+          is_purchased?: boolean | null
+          item_name: string
+          quantity?: number | null
+          ready_meal_id?: string | null
+          shopping_list_id: string
+          unit?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          food_item_id?: string | null
+          id?: string
+          is_purchased?: boolean | null
+          item_name?: string
+          quantity?: number | null
+          ready_meal_id?: string | null
+          shopping_list_id?: string
+          unit?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_list_items_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_ready_meal_id_fkey"
+            columns: ["ready_meal_id"]
+            isOneToOne: false
+            referencedRelation: "ready_meals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_shopping_list_id_fkey"
+            columns: ["shopping_list_id"]
+            isOneToOne: false
+            referencedRelation: "shopping_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopping_lists: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
