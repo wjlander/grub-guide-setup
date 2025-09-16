@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Menu, X, User, Settings, LogOut } from "lucide-react";
 import {
   DropdownMenu,
@@ -45,6 +46,8 @@ export function Header() {
 
         {/* User Menu & Mobile Toggle */}
         <div className="flex items-center space-x-2">
+          <ThemeToggle />
+          
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
