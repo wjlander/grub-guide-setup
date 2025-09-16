@@ -3,6 +3,7 @@ import { StatsCards } from "@/components/dashboard/StatsCards";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { WeeklyOverview } from "@/components/dashboard/WeeklyOverview";
 import { NutritionSummary } from "@/components/nutrition/NutritionSummary";
+import { AIRecommendations } from "@/components/ai/AIRecommendations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -111,6 +112,7 @@ const Index = () => {
           {/* Right Column */}
           <div className="space-y-8">
             <QuickActions />
+            <AIRecommendations />
             <NutritionSummary />
           </div>
         </div>

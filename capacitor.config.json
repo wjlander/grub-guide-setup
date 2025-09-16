@@ -1,0 +1,19 @@
+{
+  "appId": "app.lovable.c59f27fe757b42799ed68b35bb20706f",
+  "appName": "grub-guide-setup",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://c59f27fe-757b-4279-9ed6-8b35bb20706f.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  },
+  "plugins": {
+    "Camera": {
+      "permissions": ["camera"]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#488AFF"
+    }
+  }
+}

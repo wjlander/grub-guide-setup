@@ -36,11 +36,11 @@ export function Header() {
           <a href="/recipes" className="transition-colors hover:text-primary">
             Recipes
           </a>
-          <a href="#shopping" className="transition-colors hover:text-primary">
-            Shopping
+          <a href="/food-database" className="transition-colors hover:text-primary">
+            Food Database
           </a>
-          <a href="#nutrition" className="transition-colors hover:text-primary">
-            Nutrition
+          <a href="/mobile" className="transition-colors hover:text-primary">
+            Mobile App
           </a>
         </nav>
 
@@ -100,11 +100,11 @@ export function Header() {
             <a href="/recipes" className="text-sm font-medium transition-colors hover:text-primary">
               Recipes
             </a>
-            <a href="#shopping" className="text-sm font-medium transition-colors hover:text-primary">
-              Shopping
+            <a href="/food-database" className="text-sm font-medium transition-colors hover:text-primary">
+              Food Database
             </a>
-            <a href="#nutrition" className="text-sm font-medium transition-colors hover:text-primary">
-              Nutrition
+            <a href="/mobile" className="text-sm font-medium transition-colors hover:text-primary">
+              Mobile App
             </a>
           </nav>
         </div>
