@@ -39,6 +39,9 @@ export function Header() {
           <a href="/planning" className="transition-colors hover:text-primary">
             Planning
           </a>
+          <a href="/community" className="transition-colors hover:text-primary">
+            Community
+          </a>
           <a href="/food-database" className="transition-colors hover:text-primary">
             Food Database
           </a>
@@ -105,6 +108,9 @@ export function Header() {
             </a>
             <a href="/planning" className="text-sm font-medium transition-colors hover:text-primary">
               Planning
+            </a>
+            <a href="/community" className="text-sm font-medium transition-colors hover:text-primary">
+              Community
             </a>
             <a href="/food-database" className="text-sm font-medium transition-colors hover:text-primary">
               Food Database

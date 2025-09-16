@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievement_types: {
+        Row: {
+          created_at: string
+          criteria: Json
+          description: string
+          icon: string | null
+          id: string
+          name: string
+          reward_points: number | null
+        }
+        Insert: {
+          created_at?: string
+          criteria: Json
+          description: string
+          icon?: string | null
+          id?: string
+          name: string
+          reward_points?: number | null
+        }
+        Update: {
+          created_at?: string
+          criteria?: Json
+          description?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          reward_points?: number | null
+        }
+        Relationships: []
+      }
       food_items: {
         Row: {
           barcode: string | null
@@ -73,6 +103,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      meal_photos: {
+        Row: {
+          ai_analyzed_nutrition: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          meal_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_analyzed_nutrition?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          meal_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_analyzed_nutrition?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          meal_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_photos_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meal_plan_events: {
         Row: {
@@ -377,6 +448,51 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          parent_comment_id: string | null
+          shared_recipe_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          parent_comment_id?: string | null
+          shared_recipe_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          parent_comment_id?: string | null
+          shared_recipe_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_comments_shared_recipe_id_fkey"
+            columns: ["shared_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "shared_recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_ingredients: {
         Row: {
           created_at: string | null
@@ -418,6 +534,41 @@ export type Database = {
             columns: ["recipe_id"]
             isOneToOne: false
             referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          shared_recipe_id: string | null
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          shared_recipe_id?: string | null
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          shared_recipe_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ratings_shared_recipe_id_fkey"
+            columns: ["shared_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "shared_recipes"
             referencedColumns: ["id"]
           },
         ]
@@ -466,6 +617,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      shared_recipes: {
+        Row: {
+          average_rating: number | null
+          created_at: string
+          featured: boolean | null
+          id: string
+          is_public: boolean | null
+          recipe_id: string | null
+          total_ratings: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          average_rating?: number | null
+          created_at?: string
+          featured?: boolean | null
+          id?: string
+          is_public?: boolean | null
+          recipe_id?: string | null
+          total_ratings?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          average_rating?: number | null
+          created_at?: string
+          featured?: boolean | null
+          id?: string
+          is_public?: boolean | null
+          recipe_id?: string | null
+          total_ratings?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_recipes_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shopping_categories: {
         Row: {
@@ -588,6 +783,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achieved_at: string
+          achievement_type_id: string | null
+          id: string
+          progress: Json | null
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          achievement_type_id?: string | null
+          id?: string
+          progress?: Json | null
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string
+          achievement_type_id?: string | null
+          id?: string
+          progress?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_type_id_fkey"
+            columns: ["achievement_type_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
