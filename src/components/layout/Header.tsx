@@ -26,13 +26,13 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          <a href="#dashboard" className="transition-colors hover:text-primary">
+          <a href="/" className="transition-colors hover:text-primary">
             Dashboard
           </a>
           <a href="#meal-plans" className="transition-colors hover:text-primary">
             Meal Plans
           </a>
-          <a href="#recipes" className="transition-colors hover:text-primary">
+          <a href="/recipes" className="transition-colors hover:text-primary">
             Recipes
           </a>
           <a href="#shopping" className="transition-colors hover:text-primary">
@@ -88,13 +88,13 @@ export function Header() {
       {isMenuOpen && (
         <div className="md:hidden border-t bg-background">
           <nav className="container flex flex-col space-y-2 p-4">
-            <a href="#dashboard" className="text-sm font-medium transition-colors hover:text-primary">
+            <a href="/" className="text-sm font-medium transition-colors hover:text-primary">
               Dashboard
             </a>
             <a href="#meal-plans" className="text-sm font-medium transition-colors hover:text-primary">
               Meal Plans
             </a>
-            <a href="#recipes" className="text-sm font-medium transition-colors hover:text-primary">
+            <a href="/recipes" className="text-sm font-medium transition-colors hover:text-primary">
               Recipes
             </a>
             <a href="#shopping" className="text-sm font-medium transition-colors hover:text-primary">

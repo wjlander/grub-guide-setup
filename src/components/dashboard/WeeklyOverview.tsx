@@ -1,6 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Clock, Users, Star } from "lucide-react";
+import { Rating } from "@/components/ui/rating";
+import { MealRatingDialog } from "@/components/meals/MealRatingDialog";
+import { useState } from "react";
 
 interface Meal {
   id: string;
@@ -10,6 +14,7 @@ interface Meal {
   servings: number;
   prepTime: number;
   rating?: number;
+  notes?: string;
 }
 
 interface DayPlan {
@@ -58,6 +63,18 @@ const getMealTypeColor = (type: string) => {
 };
 
 export function WeeklyOverview() {
+  const [meals, setMeals] = useState(weekPlan);
+
+  const handleRatingSubmit = (dayIndex: number, mealIndex: number, rating: number, notes?: string) => {
+    const updatedMeals = [...meals];
+    updatedMeals[dayIndex].meals[mealIndex] = {
+      ...updatedMeals[dayIndex].meals[mealIndex],
+      rating,
+      notes
+    };
+    setMeals(updatedMeals);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -66,7 +83,7 @@ export function WeeklyOverview() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {weekPlan.map((day) => (
+          {meals.map((day, dayIndex) => (
             <div key={day.date} className="border rounded-lg p-4 hover:bg-muted/30 transition-colors">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-semibold text-base">{day.date}</h4>
@@ -74,13 +91,13 @@ export function WeeklyOverview() {
               </div>
               
               <div className="space-y-2">
-                {day.meals.map((meal) => (
-                  <div key={meal.id} className="flex items-center justify-between p-2 rounded-md hover:bg-background transition-colors">
-                    <div className="flex items-center space-x-3">
+                {day.meals.map((meal, mealIndex) => (
+                  <div key={meal.id} className="flex items-center justify-between p-2 rounded-md hover:bg-background transition-colors group">
+                    <div className="flex items-center space-x-3 flex-1">
                       <Badge className={`${getMealTypeColor(meal.type)} text-xs px-2 py-1`}>
                         {meal.type}
                       </Badge>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-sm">{meal.name}</p>
                         <div className="flex items-center space-x-3 text-xs text-muted-foreground">
                           <span>{meal.time}</span>
@@ -93,12 +110,31 @@ export function WeeklyOverview() {
                             {meal.servings}
                           </div>
                           {meal.rating && (
-                            <div className="flex">
-                              {'★'.repeat(meal.rating)}
+                            <div className="flex items-center">
+                              <Rating value={meal.rating} readonly size="sm" />
                             </div>
                           )}
                         </div>
                       </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <MealRatingDialog
+                        mealName={meal.name}
+                        currentRating={meal.rating || 0}
+                        onRatingSubmit={(rating, notes) => 
+                          handleRatingSubmit(dayIndex, mealIndex, rating, notes)
+                        }
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`opacity-0 group-hover:opacity-100 transition-opacity ${
+                            meal.rating ? 'text-yellow-500' : ''
+                          }`}
+                        >
+                          <Star className="h-4 w-4" />
+                        </Button>
+                      </MealRatingDialog>
                     </div>
                   </div>
                 ))}
