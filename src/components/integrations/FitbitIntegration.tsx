@@ -31,7 +31,10 @@ export function FitbitIntegration({ isConnected = false, onConnectionChange }: F
     setConnecting(true);
     try {
       const { data, error } = await supabase.functions.invoke('fitbit-auth', {
-        body: { userId: user.id }
+        body: { userId: user.id },
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
       });
 
       if (error) throw error;
