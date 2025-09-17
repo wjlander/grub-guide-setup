@@ -91,28 +91,55 @@ else
     print_warning "No existing deployment found to backup"
 fi
 
-# Navigate to app directory
-if [ ! -d "$APP_DIR" ]; then
-    print_error "Application directory not found: $APP_DIR"
-    print_error "Please run the initial install script first"
-    exit 1
+# Check if this is a git repository
+if [ ! -d "$APP_DIR/.git" ]; then
+    print_warning "No git repository found in $APP_DIR"
+    echo ""
+    print_status "Setting up git repository..."
+    
+    # Ask for repository URL
+    read -p "Enter your GitHub repository URL (e.g., https://github.com/username/repo.git): " REPO_URL
+    
+    if [ -z "$REPO_URL" ]; then
+        print_error "No repository URL provided"
+        print_error "You have two options:"
+        print_error "1. Connect your Lovable project to GitHub first"
+        print_error "2. Manually upload built files to $WEB_ROOT"
+        exit 1
+    fi
+    
+    # Backup existing files
+    if [ "$(ls -A $APP_DIR)" ]; then
+        mv "$APP_DIR" "$APP_DIR.backup.$(date +%s)"
+        print_warning "Existing files backed up"
+    fi
+    
+    # Clone the repository
+    print_status "Cloning repository..."
+    if ! git clone "$REPO_URL" "$APP_DIR"; then
+        print_error "Failed to clone repository"
+        exit 1
+    fi
+    
+    cd "$APP_DIR"
+    print_success "Repository cloned successfully"
+else
+    cd "$APP_DIR"
+    
+    # Stash any local changes
+    print_status "Stashing any local changes..."
+    git stash push -m "Auto-stash before update $TIMESTAMP" || true
+    
+    # Pull latest changes
+    print_status "Pulling latest changes from repository..."
+    if ! git pull origin main 2>/dev/null && ! git pull origin master 2>/dev/null; then
+        print_error "Failed to pull latest changes"
+        print_error "You may need to resolve conflicts manually"
+        exit 1
+    fi
+    
+    print_success "Latest changes pulled successfully"
 fi
-
-cd "$APP_DIR"
-
-# Stash any local changes
-print_status "Stashing any local changes..."
-git stash push -m "Auto-stash before update $TIMESTAMP" || true
-
-# Pull latest changes
-print_status "Pulling latest changes from repository..."
-if ! git pull origin main; then
-    print_error "Failed to pull latest changes"
-    print_error "You may need to resolve conflicts manually"
-    exit 1
-fi
-
-print_success "Latest changes pulled successfully"
 
 # Install/update dependencies
 print_status "Installing/updating dependencies..."
