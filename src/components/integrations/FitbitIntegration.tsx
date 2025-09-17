@@ -85,11 +85,17 @@ export function FitbitIntegration() {
       const popup = window.open(
         data.authUrl,
         'fitbit-auth',
-        'width=600,height=700,scrollbars=yes,resizable=yes'
+        'width=600,height=700,scrollbars=yes,resizable=yes,location=yes,status=yes'
       );
 
       if (!popup) {
-        throw new Error('Popup blocked. Please allow popups for this site.');
+        toast({
+          title: "Popup Blocked",
+          description: "Please allow popups for this site and try again.",
+          variant: "destructive",
+        });
+        setIsConnecting(false);
+        return;
       }
 
       // Listen for popup completion

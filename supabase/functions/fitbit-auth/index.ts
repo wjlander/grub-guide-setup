@@ -30,7 +30,7 @@ serve(async (req) => {
       });
     }
 
-    // Always use service role client to avoid auth issues
+    // Always use service role client for all operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const url = new URL(req.url);
     const { searchParams } = url;
@@ -44,9 +44,37 @@ serve(async (req) => {
       
       if (!authCode || !state) {
         console.error('Missing authorization code or state parameter');
-        return new Response('Missing authorization code or state parameter', {
+        return new Response(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Fitbit Connection Failed</title>
+            <meta charset="utf-8">
+            <style>
+              body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                text-align: center; 
+                padding: 50px 20px; 
+                background: #ef4444;
+                color: white;
+                margin: 0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+            </style>
+          </head>
+          <body>
+            <div>
+              <h1>❌ Connection Failed</h1>
+              <p>Missing required parameters. Please try again.</p>
+            </div>
+          </body>
+          </html>
+        `, {
           status: 400,
-          headers: corsHeaders,
+          headers: { ...corsHeaders, 'Content-Type': 'text/html' },
         });
       }
 
@@ -196,59 +224,26 @@ serve(async (req) => {
           <head>
             <title>Fitbit Connection Failed</title>
             <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
             <style>
               body { 
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 text-align: center; 
                 padding: 50px 20px; 
-                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                background: #ef4444;
+                color: white;
                 margin: 0;
                 min-height: 100vh;
                 display: flex;
                 align-items: center;
                 justify-content: center;
               }
-              .container {
-                max-width: 400px;
-                background: white;
-                padding: 40px 30px;
-                border-radius: 15px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-              }
-              .error { 
-                color: #ef4444; 
-                font-size: 28px; 
-                margin-bottom: 20px; 
-              }
-              .message {
-                color: #374151;
-                font-size: 16px;
-                line-height: 1.5;
-                margin-bottom: 20px;
-              }
             </style>
           </head>
           <body>
-            <div class="container">
-              <div class="error">❌ Connection Failed</div>
-              <div class="message">
-                <strong>Failed to connect your Fitbit account.</strong><br>
-                Please close this window and try again.
-              </div>
+            <div>
+              <h1>❌ Connection Failed</h1>
+              <p>Failed to connect your Fitbit account. Please close this window and try again.</p>
             </div>
-            <script>
-              setTimeout(() => {
-                try {
-                  if (window.opener) {
-                    window.opener.postMessage({ type: 'FITBIT_AUTH_ERROR' }, '*');
-                  }
-                  window.close();
-                } catch (e) {
-                  console.log('Could not close window automatically');
-                }
-              }, 3000);
-            </script>
           </body>
           </html>
         `;
@@ -260,9 +255,8 @@ serve(async (req) => {
       }
     }
 
-    // Handle POST request to generate OAuth URL
+    // Handle POST request to generate OAuth URL (requires authentication)
     if (req.method === 'POST') {
-      // For POST requests, we need authentication
       const authHeader = req.headers.get('Authorization');
       if (!authHeader) {
         return new Response(JSON.stringify({ 
