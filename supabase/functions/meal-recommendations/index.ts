@@ -140,7 +140,7 @@ Ensure all meals are practical for UK cooking and shopping.`;
         }
       ]
     }), {
-      status: 500,
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
