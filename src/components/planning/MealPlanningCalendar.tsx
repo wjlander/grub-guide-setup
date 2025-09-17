@@ -139,7 +139,7 @@ export function MealPlanningCalendar() {
       start_time: formData.start_time || null,
       end_time: formData.end_time || null,
       notes: formData.notes || null,
-      recipe_id: formData.recipe_id || null,
+      recipe_id: formData.recipe_id === 'no-recipe' ? null : formData.recipe_id || null,
     };
 
     let error;
@@ -203,7 +203,7 @@ export function MealPlanningCalendar() {
       start_time: '',
       end_time: '',
       notes: '',
-      recipe_id: '',
+      recipe_id: 'no-recipe',
     });
     setEditingEvent(null);
     setSelectedDate(null);
@@ -217,7 +217,7 @@ export function MealPlanningCalendar() {
       start_time: event.start_time || '',
       end_time: event.end_time || '',
       notes: event.notes || '',
-      recipe_id: event.recipe_id || '',
+      recipe_id: event.recipe_id || 'no-recipe',
     });
     setSelectedDate(new Date(event.date));
     setIsDialogOpen(true);
@@ -389,7 +389,7 @@ export function MealPlanningCalendar() {
                   <SelectValue placeholder="Select a recipe" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No recipe</SelectItem>
+                  <SelectItem value="no-recipe">No recipe</SelectItem>
                   {recipes.map(recipe => (
                     <SelectItem key={recipe.id} value={recipe.id}>
                       {recipe.name}
