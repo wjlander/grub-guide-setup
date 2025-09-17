@@ -62,11 +62,11 @@ export function FitbitIntegration() {
       return;
     }
 
-    // For now, show setup instructions instead of attempting OAuth
+        urlWithUserId.toString(),
     toast({
       title: "Fitbit Integration Setup",
-      description: "Fitbit integration requires additional server configuration. Please contact your administrator.",
-    });
+      // Get auth URL from our edge function with user ID
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fitbit-oauth-start?user_id=${user.id}`, {
   };
 
   const disconnectFitbit = async () => {
@@ -81,7 +81,7 @@ export function FitbitIntegration() {
           fitbit_user_id: null,
           fitbit_connected_at: null,
           updated_at: new Date().toISOString(),
-        })
+        body: JSON.stringify({}),
         .eq('user_id', user.id);
 
       if (error) {
@@ -91,7 +91,11 @@ export function FitbitIntegration() {
       setIsConnected(false);
       setFitbitProfile(null);
       
-      toast({
+      // Add user ID to the auth URL for the callback
+      const urlWithUserId = new URL(authUrl);
+      urlWithUserId.searchParams.set('state', `${urlWithUserId.searchParams.get('state')}_${user.id}`);
+      
+      // Open popup for OAuth
         title: "Fitbit Disconnected",
         description: "Your Fitbit account has been disconnected.",
       });
