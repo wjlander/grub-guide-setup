@@ -62,11 +62,49 @@ export function FitbitIntegration() {
       return;
     }
 
-        urlWithUserId.toString(),
-    toast({
-      title: "Fitbit Integration Setup",
+    setIsConnecting(true);
+    try {
       // Get auth URL from our edge function with user ID
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fitbit-oauth-start?user_id=${user.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get Fitbit auth URL');
+      }
+
+      const { authUrl } = await response.json();
+      
+      // Add user ID to the auth URL for the callback
+      const urlWithUserId = new URL(authUrl);
+      urlWithUserId.searchParams.set('state', `${urlWithUserId.searchParams.get('state')}_${user.id}`);
+      
+      // Open popup for OAuth
+      window.open(
+        urlWithUserId.toString(),
+        'fitbit-auth',
+        'width=600,height=700,scrollbars=yes,resizable=yes'
+      );
+
+      toast({
+        title: "Fitbit Integration Setup",
+        description: "Please complete the authorization in the popup window.",
+      });
+    } catch (error: any) {
+      console.error('Error connecting to Fitbit:', error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to Fitbit. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const disconnectFitbit = async () => {
@@ -81,7 +119,7 @@ export function FitbitIntegration() {
           fitbit_user_id: null,
           fitbit_connected_at: null,
           updated_at: new Date().toISOString(),
-        body: JSON.stringify({}),
+        })
         .eq('user_id', user.id);
 
       if (error) {
@@ -91,11 +129,7 @@ export function FitbitIntegration() {
       setIsConnected(false);
       setFitbitProfile(null);
       
-      // Add user ID to the auth URL for the callback
-      const urlWithUserId = new URL(authUrl);
-      urlWithUserId.searchParams.set('state', `${urlWithUserId.searchParams.get('state')}_${user.id}`);
-      
-      // Open popup for OAuth
+      toast({
         title: "Fitbit Disconnected",
         description: "Your Fitbit account has been disconnected.",
       });
