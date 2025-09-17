@@ -143,7 +143,7 @@ fi
 
 # Install/update dependencies
 print_status "Installing/updating dependencies..."
-if ! npm ci --production; then
+if ! npm ci; then
     print_error "Failed to install dependencies"
     exit 1
 fi
