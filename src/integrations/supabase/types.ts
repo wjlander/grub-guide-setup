@@ -581,6 +581,7 @@ export type Database = {
           id: string
           image_url: string | null
           instructions: string | null
+          meal_times: string[] | null
           name: string
           prep_time: number | null
           servings: number | null
@@ -595,6 +596,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           instructions?: string | null
+          meal_times?: string[] | null
           name: string
           prep_time?: number | null
           servings?: number | null
@@ -609,6 +611,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           instructions?: string | null
+          meal_times?: string[] | null
           name?: string
           prep_time?: number | null
           servings?: number | null
@@ -617,6 +620,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      shared_meal_plans: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          original_plan_id: string | null
+          title: string
+          updated_at: string | null
+          weeks_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          original_plan_id?: string | null
+          title: string
+          updated_at?: string | null
+          weeks_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          original_plan_id?: string | null
+          title?: string
+          updated_at?: string | null
+          weeks_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_meal_plans_original_plan_id_fkey"
+            columns: ["original_plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shared_recipes: {
         Row: {
@@ -815,6 +862,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      work_schedules: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          schedule: Json
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          schedule: Json
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          schedule?: Json
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

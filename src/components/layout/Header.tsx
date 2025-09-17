@@ -67,6 +67,9 @@ export function Header() {
           <Link to="/food-database" className="transition-colors hover:text-primary">
             Food Database
           </Link>
+          <Link to="/ready-meals" className="transition-colors hover:text-primary">
+            Ready Meals
+          </Link>
           <Link to="/mobile" className="transition-colors hover:text-primary">
             Mobile App
           </Link>
@@ -138,6 +141,9 @@ export function Header() {
             </Link>
             <Link to="/food-database" className="text-sm font-medium transition-colors hover:text-primary">
               Food Database
+            </Link>
+            <Link to="/ready-meals" className="text-sm font-medium transition-colors hover:text-primary">
+              Ready Meals
             </Link>
             <Link to="/mobile" className="text-sm font-medium transition-colors hover:text-primary">
               Mobile App

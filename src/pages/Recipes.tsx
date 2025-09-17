@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { SearchAndFilter } from "@/components/search/SearchAndFilter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,64 +6,28 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Rating } from "@/components/ui/rating";
 import { Clock, Users, Plus, ChefHat } from "lucide-react";
+import { RecipeForm } from "@/components/recipes/RecipeForm";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Recipe {
   id: string;
   name: string;
-  description: string;
-  prepTime: number;
-  cookTime: number;
-  servings: number;
+  description?: string;
+  prep_time?: number;
+  cook_time?: number;
+  servings?: number;
   rating?: number;
-  tags: string[];
-  imageUrl?: string;
+  tags?: string[];
+  meal_times?: string[];
+  image_url?: string;
+  instructions?: string;
 }
 
-// Mock data for demonstration
-const mockRecipes: Recipe[] = [
-  {
-    id: "1",
-    name: "Chicken Caesar Salad",
-    description: "Fresh romaine lettuce with grilled chicken, parmesan, and homemade caesar dressing",
-    prepTime: 15,
-    cookTime: 10,
-    servings: 2,
-    rating: 5,
-    tags: ["lunch", "high-protein", "quick"],
-  },
-  {
-    id: "2", 
-    name: "Beef Stir Fry",
-    description: "Tender beef strips with mixed vegetables in a savory sauce",
-    prepTime: 20,
-    cookTime: 15,
-    servings: 4,
-    rating: 4,
-    tags: ["dinner", "high-protein", "vegetables"],
-  },
-  {
-    id: "3",
-    name: "Overnight Oats",
-    description: "Creamy oats with berries and nuts, perfect for busy mornings",
-    prepTime: 5,
-    cookTime: 0,
-    servings: 1,
-    rating: 4,
-    tags: ["breakfast", "vegetarian", "quick"],
-  },
-  {
-    id: "4",
-    name: "Salmon & Vegetables",
-    description: "Baked salmon fillet with roasted seasonal vegetables",
-    prepTime: 15,
-    cookTime: 25,
-    servings: 2,
-    rating: 5,
-    tags: ["dinner", "high-protein", "healthy"],
-  },
-];
+// Real recipes from database
 
 export default function Recipes() {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     mealTypes: [],
@@ -71,31 +35,60 @@ export default function Recipes() {
     prepTime: null,
     rating: null,
   });
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+  const { toast } = useToast();
 
-  const filteredRecipes = mockRecipes.filter((recipe) => {
+  const loadRecipes = async () => {
+    const { data, error } = await supabase
+      .from('recipes')
+      .select('*')
+      .order('name');
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load recipes",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setRecipes(data || []);
+  };
+
+  const filteredRecipes = recipes.filter((recipe) => {
     // Search term filter
     const matchesSearch = recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         recipe.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         recipe.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+                         recipe.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         recipe.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         recipe.meal_times?.some(time => time.toLowerCase().includes(searchTerm.toLowerCase()));
 
     // Meal type filter
     const matchesMealType = filters.mealTypes.length === 0 || 
-                           filters.mealTypes.some(type => recipe.tags.includes(type));
+                           filters.mealTypes.some(type => 
+                             recipe.tags?.includes(type) || 
+                             recipe.meal_times?.includes(type)
+                           );
 
     // Dietary restrictions filter
     const matchesDietary = filters.dietaryRestrictions.length === 0 ||
-                          filters.dietaryRestrictions.some(restriction => recipe.tags.includes(restriction));
+                          filters.dietaryRestrictions.some(restriction => recipe.tags?.includes(restriction));
 
     // Prep time filter
-    const totalTime = recipe.prepTime + recipe.cookTime;
+    const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
     const matchesPrepTime = !filters.prepTime || 
                            (totalTime >= filters.prepTime.min && totalTime <= filters.prepTime.max);
 
-    // Rating filter
-    const matchesRating = !filters.rating || (recipe.rating && recipe.rating >= filters.rating);
+    // Rating filter - skip rating filter for now since we don't have ratings in the DB
+    const matchesRating = true;
 
     return matchesSearch && matchesMealType && matchesDietary && matchesPrepTime && matchesRating;
   });
+
+  useEffect(() => {
+    loadRecipes();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -109,7 +102,10 @@ export default function Recipes() {
               Discover and manage your favorite recipes
             </p>
           </div>
-          <Button className="bg-gradient-primary">
+          <Button 
+            className="bg-gradient-primary"
+            onClick={() => { setEditingRecipe(null); setIsFormOpen(true); }}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Recipe
           </Button>
@@ -127,7 +123,8 @@ export default function Recipes() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredRecipes.map((recipe) => (
-            <Card key={recipe.id} className="hover:shadow-lg transition-shadow cursor-pointer group">
+            <Card key={recipe.id} className="hover:shadow-lg transition-shadow cursor-pointer group"
+                  onClick={() => { setEditingRecipe(recipe); setIsFormOpen(true); }}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg group-hover:text-primary transition-colors">
@@ -146,27 +143,32 @@ export default function Recipes() {
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center">
                     <ChefHat className="w-4 h-4 mr-1" />
-                    {recipe.prepTime}m prep
+                    {recipe.prep_time || 0}m prep
                   </div>
                   <div className="flex items-center">
                     <Clock className="w-4 h-4 mr-1" />
-                    {recipe.cookTime}m cook
+                    {recipe.cook_time || 0}m cook
                   </div>
                   <div className="flex items-center">
                     <Users className="w-4 h-4 mr-1" />
-                    {recipe.servings}
+                    {recipe.servings || 1}
                   </div>
                 </div>
                 
                 <div className="flex flex-wrap gap-1">
-                  {recipe.tags.slice(0, 3).map((tag) => (
+                  {recipe.meal_times?.slice(0, 2).map((mealTime) => (
+                    <Badge key={mealTime} variant="default" className="text-xs capitalize">
+                      {mealTime}
+                    </Badge>
+                  ))}
+                  {recipe.tags?.slice(0, 2).map((tag) => (
                     <Badge key={tag} variant="outline" className="text-xs capitalize">
                       {tag}
                     </Badge>
                   ))}
-                  {recipe.tags.length > 3 && (
+                  {(recipe.meal_times?.length || 0) + (recipe.tags?.length || 0) > 4 && (
                     <Badge variant="outline" className="text-xs">
-                      +{recipe.tags.length - 3} more
+                      +{((recipe.meal_times?.length || 0) + (recipe.tags?.length || 0)) - 4} more
                     </Badge>
                   )}
                 </div>
@@ -185,12 +187,22 @@ export default function Recipes() {
                 : "Get started by adding your first recipe"
               }
             </p>
-            <Button className="bg-gradient-primary">
+            <Button 
+              className="bg-gradient-primary"
+              onClick={() => { setEditingRecipe(null); setIsFormOpen(true); }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add Your First Recipe
             </Button>
           </div>
         )}
+
+        <RecipeForm
+          isOpen={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
+          recipe={editingRecipe}
+          onSave={loadRecipes}
+        />
       </main>
     </div>
   );
