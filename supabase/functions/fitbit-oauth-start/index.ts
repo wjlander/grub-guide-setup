@@ -12,22 +12,23 @@ serve(async (req) => {
   }
 
   try {
-    const FITBIT_CLIENT_ID = Deno.env.get('FITBIT_CLIENT_ID');
-    const FITBIT_REDIRECT_URI = Deno.env.get('FITBIT_REDIRECT_URI');
+    const FITBIT_CLIENT_ID = '23TJDY';
+    const FITBIT_REDIRECT_URI = 'https://wmqfonczkedrrdnfwpfc.supabase.co/functions/v1/fitbit-oauth-callback';
 
-    if (!FITBIT_CLIENT_ID || !FITBIT_REDIRECT_URI) {
+    const { userId } = await req.json();
+    
+    if (!userId) {
       return new Response(JSON.stringify({ 
-        error: 'Fitbit credentials not configured' 
+        error: 'User ID is required' 
       }), {
-        status: 500,
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     // Generate state parameter for security
-    const state = crypto.randomUUID();
+    const state = `${crypto.randomUUID()}_${userId}`;
     
-    // Store state in a way that can be verified later (you might want to use a database for production)
     const authUrl = new URL('https://www.fitbit.com/oauth2/authorize');
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('client_id', FITBIT_CLIENT_ID);

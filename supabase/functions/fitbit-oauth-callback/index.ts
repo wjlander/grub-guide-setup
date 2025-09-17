@@ -46,14 +46,20 @@ serve(async (req) => {
       throw new Error('No authorization code received');
     }
 
-    const FITBIT_CLIENT_ID = Deno.env.get('FITBIT_CLIENT_ID');
-    const FITBIT_CLIENT_SECRET = Deno.env.get('FITBIT_CLIENT_SECRET');
-    const FITBIT_REDIRECT_URI = Deno.env.get('FITBIT_REDIRECT_URI');
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const FITBIT_CLIENT_ID = '23TJDY';
+    const FITBIT_CLIENT_SECRET = '5a1bd13b96df8b06ae0e0b2c0954f01d';
+    const FITBIT_REDIRECT_URI = 'https://wmqfonczkedrrdnfwpfc.supabase.co/functions/v1/fitbit-oauth-callback';
+    const SUPABASE_URL = 'https://wmqfonczkedrrdnfwpfc.supabase.co';
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!FITBIT_CLIENT_ID || !FITBIT_CLIENT_SECRET || !FITBIT_REDIRECT_URI || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error('Missing required environment variables');
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing Supabase service role key');
+    }
+
+    // Extract user ID from state parameter
+    const userId = state?.split('_').pop();
+    if (!userId) {
+      throw new Error('User ID not found in state parameter');
     }
 
     // Exchange code for tokens
@@ -93,14 +99,6 @@ serve(async (req) => {
 
     // Create Supabase client with service role
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    // Get user ID from state parameter (you'll need to implement state storage/retrieval)
-    // For now, we'll extract it from the referrer or use a different method
-    const userId = url.searchParams.get('user_id');
-    
-    if (!userId) {
-      throw new Error('User ID not found in callback');
-    }
 
     // Store tokens in user profile
     const { error: updateError } = await supabase

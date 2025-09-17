@@ -64,14 +64,14 @@ export function FitbitIntegration() {
 
     setIsConnecting(true);
     try {
-      // Get auth URL from our edge function with user ID
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fitbit-oauth-start?user_id=${user.id}`, {
+      // Get auth URL from our edge function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fitbit-oauth-start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ userId: user.id }),
       });
 
       if (!response.ok) {
@@ -80,25 +80,48 @@ export function FitbitIntegration() {
 
       const { authUrl } = await response.json();
       
-      // Add user ID to the auth URL for the callback
-      const urlWithUserId = new URL(authUrl);
-      urlWithUserId.searchParams.set('state', `${urlWithUserId.searchParams.get('state')}_${user.id}`);
-      
       // Open popup for OAuth
-      window.open(
-        urlWithUserId.toString(),
+      const popup = window.open(
+        authUrl,
         'fitbit-auth',
         'width=600,height=700,scrollbars=yes,resizable=yes'
       );
+
+      if (!popup) {
+        throw new Error('Popup blocked. Please allow popups for this site.');
+      }
+
+      // Listen for popup messages
+      const handleMessage = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+        
+        if (event.data.type === 'FITBIT_AUTH_SUCCESS') {
+          window.removeEventListener('message', handleMessage);
+          toast({
+            title: "Fitbit Connected!",
+            description: "Your Fitbit account has been successfully connected.",
+          });
+          checkFitbitConnection();
+        } else if (event.data.type === 'FITBIT_AUTH_ERROR') {
+          window.removeEventListener('message', handleMessage);
+          toast({
+            title: "Connection Failed",
+            description: event.data.error || "Failed to connect to Fitbit.",
+            variant: "destructive",
+          });
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
 
       toast({
         title: "Fitbit Integration Setup",
         description: "Please complete the authorization in the popup window.",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to start Fitbit connection process.",
+        description: error instanceof Error ? error.message : "Failed to start Fitbit connection process.",
         variant: "destructive",
       });
     } finally {
