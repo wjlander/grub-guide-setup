@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,12 +23,14 @@ serve(async (req) => {
       throw new Error('Fitbit credentials not configured');
     }
 
-    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
     const url = new URL(req.url);
     const { searchParams } = url;
 
     // Handle OAuth callback
     if (req.method === 'GET' && searchParams.has('code')) {
+      // Use service role key for OAuth callback since it doesn't require user auth
+      const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+      
       const authCode = searchParams.get('code');
       const state = searchParams.get('state'); // Contains user_id
       
@@ -44,12 +46,14 @@ serve(async (req) => {
         body: new URLSearchParams({
           client_id: fitbitClientId,
           grant_type: 'authorization_code',
-          redirect_uri: `${req.url.split('?')[0]}`,
+          redirect_uri: `${supabaseUrl}/functions/v1/fitbit-auth`,
           code: authCode!,
         }).toString(),
       });
 
       if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        console.error('Token exchange failed:', errorText);
         throw new Error(`Token exchange failed: ${tokenResponse.status}`);
       }
 
@@ -107,13 +111,20 @@ serve(async (req) => {
       throw new Error('Method not allowed');
     }
 
+    // For POST requests, we need user authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
     const { userId } = await req.json();
     
     if (!userId) {
       throw new Error('User ID is required');
     }
 
-    const redirectUri = `${Deno.env.get('SUPABASE_URL')}/functions/v1/fitbit-auth`;
+    const redirectUri = `${supabaseUrl}/functions/v1/fitbit-auth`;
     const scope = 'nutrition weight heartrate activity location profile sleep';
     
     const authUrl = `https://www.fitbit.com/oauth2/authorize?` +
