@@ -28,7 +28,7 @@ serve(async (req) => {
     const { searchParams } = url;
 
     // Handle OAuth callback
-    if (searchParams.has('code')) {
+    if (req.method === 'GET' && searchParams.has('code')) {
       const authCode = searchParams.get('code');
       const state = searchParams.get('state'); // Contains user_id
       
@@ -63,6 +63,7 @@ serve(async (req) => {
           fitbit_access_token: tokenData.access_token,
           fitbit_refresh_token: tokenData.refresh_token,
           fitbit_user_id: tokenData.user_id,
+          fitbit_connected_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }, {
           onConflict: 'user_id'
@@ -75,17 +76,37 @@ serve(async (req) => {
 
       console.log('Fitbit integration successful for user:', state);
 
-      // Redirect to success page
-      return new Response(null, {
-        status: 302,
-        headers: {
-          ...corsHeaders,
-          'Location': `${Deno.env.get('SUPABASE_URL')}/auth/v1/verify?type=recovery&redirect_to=${encodeURIComponent(req.headers.get('origin') || '')}#fitbit-connected`,
-        },
+      // Return success page HTML
+      const successHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Fitbit Connected</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+            .success { color: #22c55e; font-size: 24px; margin-bottom: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="success">✅ Fitbit Connected Successfully!</div>
+          <p>You can now close this window and return to the app.</p>
+          <script>
+            setTimeout(() => window.close(), 3000);
+          </script>
+        </body>
+        </html>
+      `;
+      
+      return new Response(successHtml, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/html' },
       });
     }
 
-    // Generate OAuth URL
+    // Handle POST request to generate OAuth URL
+    if (req.method !== 'POST') {
+      throw new Error('Method not allowed');
+    }
+
     const { userId } = await req.json();
     
     if (!userId) {
