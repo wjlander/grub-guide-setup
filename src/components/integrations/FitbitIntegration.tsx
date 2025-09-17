@@ -42,13 +42,13 @@ export function FitbitIntegration({ isConnected = false, onConnectionChange }: F
         
         // Listen for successful connection
         const checkConnection = setInterval(async () => {
-          const { data: profile } = await supabase
+          const { data: profiles } = await supabase
             .from('profiles')
             .select('fitbit_access_token')
             .eq('user_id', user.id)
-            .single();
+            .limit(1);
             
-          if (profile?.fitbit_access_token) {
+          if (profiles && profiles.length > 0 && profiles[0]?.fitbit_access_token) {
             setConnected(true);
             onConnectionChange?.(true);
             clearInterval(checkConnection);
