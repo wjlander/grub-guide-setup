@@ -92,7 +92,7 @@ serve(async (req) => {
       throw new Error('User ID is required');
     }
 
-    const redirectUri = `${req.url}`;
+    const redirectUri = `${Deno.env.get('SUPABASE_URL')}/functions/v1/fitbit-auth`;
     const scope = 'nutrition weight heartrate activity location profile sleep';
     
     const authUrl = `https://www.fitbit.com/oauth2/authorize?` +

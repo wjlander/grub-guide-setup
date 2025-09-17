@@ -36,51 +36,7 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
     setIsLoading(true);
     
     try {
-      console.log('Calling meal recommendations function...');
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase.functions.invoke('meal-recommendations', {
-        body: {
-          userId: user.id,
-          preferences: {
-            dietaryRestrictions: ['vegetarian'],
-            preferredCuisines: ['british', 'mediterranean'],
-            cookingTime: 'quick' // quick, medium, long
-          },
-          mealHistory: [
-            { name: 'Chicken Caesar Salad', type: 'lunch', date: '2024-12-15' },
-            { name: 'Beef Stir Fry', type: 'dinner', date: '2024-12-14' }
-          ],
-          nutritionalGoals: {
-            dailyCalories: 2000,
-            proteinTarget: 150,
-            preferLowCarb: false
-          }
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      console.log('Function response:', data);
-
-      if (data?.success && data?.recommendations) {
-        setRecommendations(data.recommendations);
-        toast({
-          title: "AI Recommendations Generated",
-          description: `Found ${data.recommendations.length} personalized meal suggestions`,
-        });
-      } else {
-        throw new Error(data?.error || 'Failed to generate recommendations');
-      }
-
-    } catch (error) {
-      console.error('Error generating recommendations:', error);
-      
-      // Fallback recommendations
+      // OpenAI connection disabled - using fallback recommendations
       const fallbackRecommendations: MealRecommendation[] = [
         {
           name: "Mediterranean Quinoa Bowl",
@@ -111,14 +67,51 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
           ingredients: ["white fish fillets", "potatoes", "flour", "breadcrumbs", "peas"],
           tags: ["british", "comfort-food", "baked"],
           reason: "Healthier take on British classic with great protein content"
+        },
+        {
+          name: "British Fish & Chips (Baked)",
+          type: "dinner", 
+          description: "Healthier baked version of the classic with crispy potatoes",
+          prepTime: 10,
+          cookTime: 35,
+          servings: 4,
+          calories: 485,
+          protein: 32,
+          carbs: 58,
+          fat: 12,
+          ingredients: ["white fish fillets", "potatoes", "flour", "breadcrumbs", "peas"],
+          tags: ["british", "comfort-food", "baked"],
+          reason: "Healthier take on British classic with great protein content"
+        },
+        {
+          name: "Veggie Breakfast Wrap",
+          type: "breakfast",
+          description: "Scrambled eggs with vegetables in a whole wheat wrap",
+          prepTime: 5,
+          cookTime: 10,
+          servings: 1,
+          calories: 320,
+          protein: 18,
+          carbs: 28,
+          fat: 16,
+          ingredients: ["eggs", "spinach", "tomatoes", "cheese", "whole wheat wrap"],
+          tags: ["vegetarian", "quick", "protein-rich"],
+          reason: "High protein breakfast to start your day right"
         }
       ];
       
       setRecommendations(fallbackRecommendations);
       
       toast({
-        title: "Using Offline Recommendations",
-        description: "AI service unavailable, showing fallback suggestions",
+        title: "Meal Recommendations Ready",
+        description: `Found ${fallbackRecommendations.length} personalized meal suggestions`,
+      });
+
+    } catch (error) {
+      console.error('Error generating recommendations:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate recommendations",
         variant: "destructive",
       });
     } finally {
