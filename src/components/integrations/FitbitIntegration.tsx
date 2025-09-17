@@ -271,11 +271,20 @@ export function FitbitIntegration() {
 
             <Button 
               onClick={connectToFitbit} 
-              disabled={true}
-              className="w-full bg-muted text-muted-foreground cursor-not-allowed"
+             disabled={isConnecting}
+             className="w-full bg-[#00B2A9] hover:bg-[#00B2A9]/90 text-white"
             >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Connect to Fitbit (Setup Required)
+             {isConnecting ? (
+               <>
+                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                 Connecting...
+               </>
+             ) : (
+               <>
+                 <ExternalLink className="mr-2 h-4 w-4" />
+                 Connect to Fitbit
+               </>
+             )}
             </Button>
           </div>
         )}
