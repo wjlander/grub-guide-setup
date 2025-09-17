@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Star, TrendingUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-image.jpg";
 
 const Index = () => {
+  const navigate = useNavigate();
+  
   const stats = {
     totalMeals: 18,
     weeklyPlans: 3,
@@ -40,11 +43,20 @@ const Index = () => {
             From barcode scanning to nutrition tracking, we've got your food journey covered.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg">
+            <Button 
+              onClick={() => navigate('/planning')}
+              size="lg" 
+              className="bg-white text-primary hover:bg-white/90 shadow-lg"
+            >
               <Calendar className="mr-2 h-5 w-5" />
               Start Meal Planning
             </Button>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
+            <Button 
+              onClick={() => navigate('/recipes')}
+              variant="outline" 
+              size="lg" 
+              className="border-white text-white hover:bg-white/10"
+            >
               Explore Recipes
             </Button>
           </div>

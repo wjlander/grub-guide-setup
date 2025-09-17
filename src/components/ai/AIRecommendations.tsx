@@ -38,9 +38,12 @@ export function AIRecommendations({ className }: AIRecommendationsProps) {
     try {
       console.log('Calling meal recommendations function...');
       
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { data, error } = await supabase.functions.invoke('meal-recommendations', {
         body: {
-          userId: 'demo-user', // In a real app, this would be auth.uid()
+          userId: user.id,
           preferences: {
             dietaryRestrictions: ['vegetarian'],
             preferredCuisines: ['british', 'mediterranean'],
