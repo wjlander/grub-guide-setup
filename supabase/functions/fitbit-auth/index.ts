@@ -23,18 +23,22 @@ serve(async (req) => {
       throw new Error('Fitbit credentials not configured');
     }
 
+    // Always use service role client to avoid auth issues
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
+    
     const url = new URL(req.url);
     const { searchParams } = url;
 
-    // Handle OAuth callback
+    // Handle OAuth callback (GET request with code parameter)
     if (req.method === 'GET' && searchParams.has('code')) {
-      // Use service role key for OAuth callback since it doesn't require user auth
-      const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
-      
       const authCode = searchParams.get('code');
       const state = searchParams.get('state'); // Contains user_id
       
       console.log('Processing Fitbit OAuth callback for user:', state);
+
+      if (!authCode || !state) {
+        throw new Error('Missing authorization code or state parameter');
+      }
 
       // Exchange authorization code for access token
       const tokenResponse = await fetch('https://api.fitbit.com/oauth2/token', {
@@ -47,17 +51,18 @@ serve(async (req) => {
           client_id: fitbitClientId,
           grant_type: 'authorization_code',
           redirect_uri: `${supabaseUrl}/functions/v1/fitbit-auth`,
-          code: authCode!,
+          code: authCode,
         }).toString(),
       });
 
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text();
         console.error('Token exchange failed:', errorText);
-        throw new Error(`Token exchange failed: ${tokenResponse.status}`);
+        throw new Error(`Token exchange failed: ${tokenResponse.status} - ${errorText}`);
       }
 
       const tokenData = await tokenResponse.json();
+      console.log('Token exchange successful, storing tokens for user:', state);
       
       // Store Fitbit tokens in user profile
       const { error: updateError } = await supabase
@@ -87,15 +92,42 @@ serve(async (req) => {
         <head>
           <title>Fitbit Connected</title>
           <style>
-            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-            .success { color: #22c55e; font-size: 24px; margin-bottom: 20px; }
+            body { 
+              font-family: Arial, sans-serif; 
+              text-align: center; 
+              padding: 50px; 
+              background: #f8f9fa;
+            }
+            .success { 
+              color: #22c55e; 
+              font-size: 24px; 
+              margin-bottom: 20px; 
+            }
+            .container {
+              max-width: 400px;
+              margin: 0 auto;
+              background: white;
+              padding: 30px;
+              border-radius: 10px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }
           </style>
         </head>
         <body>
-          <div class="success">✅ Fitbit Connected Successfully!</div>
-          <p>You can now close this window and return to the app.</p>
+          <div class="container">
+            <div class="success">✅ Fitbit Connected Successfully!</div>
+            <p>Your Fitbit account has been connected to UK Meal Planner.</p>
+            <p>You can now close this window and return to the app.</p>
+          </div>
           <script>
-            setTimeout(() => window.close(), 3000);
+            // Close window after 3 seconds
+            setTimeout(() => {
+              try {
+                window.close();
+              } catch (e) {
+                console.log('Could not close window automatically');
+              }
+            }, 3000);
           </script>
         </body>
         </html>
@@ -103,43 +135,45 @@ serve(async (req) => {
       
       return new Response(successHtml, {
         headers: { ...corsHeaders, 'Content-Type': 'text/html' },
+        status: 200,
       });
     }
 
     // Handle POST request to generate OAuth URL
-    if (req.method !== 'POST') {
-      throw new Error('Method not allowed');
+    if (req.method === 'POST') {
+      const { userId } = await req.json();
+      
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      const redirectUri = `${supabaseUrl}/functions/v1/fitbit-auth`;
+      const scope = 'nutrition weight heartrate activity location profile sleep';
+      
+      const authUrl = `https://www.fitbit.com/oauth2/authorize?` +
+        `response_type=code&` +
+        `client_id=${fitbitClientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `scope=${encodeURIComponent(scope)}&` +
+        `state=${userId}`;
+
+      console.log('Generated Fitbit auth URL for user:', userId);
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        authUrl 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
     }
 
-    // For POST requests, we need user authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
-
-    const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
-    const { userId } = await req.json();
-    
-    if (!userId) {
-      throw new Error('User ID is required');
-    }
-
-    const redirectUri = `${supabaseUrl}/functions/v1/fitbit-auth`;
-    const scope = 'nutrition weight heartrate activity location profile sleep';
-    
-    const authUrl = `https://www.fitbit.com/oauth2/authorize?` +
-      `response_type=code&` +
-      `client_id=${fitbitClientId}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `scope=${encodeURIComponent(scope)}&` +
-      `state=${userId}`;
-
-    console.log('Generated Fitbit auth URL for user:', userId);
-
+    // Method not allowed
     return new Response(JSON.stringify({ 
-      success: true, 
-      authUrl 
+      success: false, 
+      error: 'Method not allowed' 
     }), {
+      status: 405,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
