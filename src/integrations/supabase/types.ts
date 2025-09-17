@@ -364,6 +364,10 @@ export type Database = {
           created_at: string | null
           email: string | null
           first_name: string | null
+          fitbit_access_token: string | null
+          fitbit_connected_at: string | null
+          fitbit_refresh_token: string | null
+          fitbit_user_id: string | null
           id: string
           last_name: string | null
           updated_at: string | null
@@ -374,6 +378,10 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           first_name?: string | null
+          fitbit_access_token?: string | null
+          fitbit_connected_at?: string | null
+          fitbit_refresh_token?: string | null
+          fitbit_user_id?: string | null
           id?: string
           last_name?: string | null
           updated_at?: string | null
@@ -384,6 +392,10 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           first_name?: string | null
+          fitbit_access_token?: string | null
+          fitbit_connected_at?: string | null
+          fitbit_refresh_token?: string | null
+          fitbit_user_id?: string | null
           id?: string
           last_name?: string | null
           updated_at?: string | null
