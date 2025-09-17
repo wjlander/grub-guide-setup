@@ -82,13 +82,19 @@ export function BarcodeScanner({ isOpen, onClose, onBarcodeScanned }: BarcodeSca
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
 
-      // For demo purposes, we'll simulate barcode detection
-      // In a real app, you'd use a proper barcode detection library
+      // Simulate barcode detection for demo
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       
-      // Simulate finding a barcode (this is just for demo)
-      if (Math.random() > 0.98) { // 2% chance per frame
-        const mockBarcode = "1234567890123"; // Mock EAN-13 barcode
+      // Simulate finding real barcodes occasionally
+      if (Math.random() > 0.97) { // 3% chance per frame
+        const realBarcodes = [
+          "3017620422003", // Nutella
+          "5000169005743", // Cadbury Dairy Milk
+          "8712566441174", // Heinz Baked Beans
+          "5449000000996", // Coca Cola
+          "3228857000906", // Evian Water
+        ];
+        const mockBarcode = realBarcodes[Math.floor(Math.random() * realBarcodes.length)];
         onBarcodeScanned(mockBarcode);
         onClose();
         toast({
