@@ -251,7 +251,7 @@ sudo tee /etc/logrotate.d/meal-planner > /dev/null <<EOL
 }
 EOL
 
-# Final status check
+# Final status check and debugging
 echo ""
 echo "🎉 Installation Complete!"
 echo "========================="
@@ -260,6 +260,17 @@ echo "✅ Web root: /var/www/html"
 echo "✅ Nginx configuration: /etc/nginx/sites-available/meal-planner"
 echo "✅ Update script: /opt/meal-planner/update.sh"
 echo "✅ Backup script: /opt/meal-planner/backup.sh"
+echo ""
+
+# Debug information
+echo "🔍 Debug Information:"
+echo "===================="
+echo "Nginx status: $(sudo systemctl is-active nginx)"
+echo "Files in web root:"
+ls -la /var/www/html/
+echo ""
+echo "Nginx error log (last 5 lines):"
+sudo tail -5 /var/log/nginx/error.log 2>/dev/null || echo "No error log found"
 echo ""
 
 # Display access information
