@@ -96,10 +96,9 @@ export function FitbitIntegration() {
         description: "Please complete the authorization in the popup window.",
       });
     } catch (error: any) {
-      console.error('Error connecting to Fitbit:', error);
       toast({
-        title: "Connection Error",
-        description: "Failed to connect to Fitbit. Please try again.",
+        title: "Error",
+        description: "Failed to start Fitbit connection process.",
         variant: "destructive",
       });
     } finally {
