@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Menu, X, User, Settings, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
@@ -47,27 +49,27 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          <a href="/" className="transition-colors hover:text-primary">
+          <Link to="/" className="transition-colors hover:text-primary">
             Dashboard
-          </a>
-          <a href="#meal-plans" className="transition-colors hover:text-primary">
+          </Link>
+          <Link to="/planning" className="transition-colors hover:text-primary">
             Meal Plans
-          </a>
-          <a href="/recipes" className="transition-colors hover:text-primary">
+          </Link>
+          <Link to="/recipes" className="transition-colors hover:text-primary">
             Recipes
-          </a>
-          <a href="/planning" className="transition-colors hover:text-primary">
+          </Link>
+          <Link to="/planning" className="transition-colors hover:text-primary">
             Planning
-          </a>
-          <a href="/community" className="transition-colors hover:text-primary">
+          </Link>
+          <Link to="/community" className="transition-colors hover:text-primary">
             Community
-          </a>
-          <a href="/food-database" className="transition-colors hover:text-primary">
+          </Link>
+          <Link to="/food-database" className="transition-colors hover:text-primary">
             Food Database
-          </a>
-          <a href="/mobile" className="transition-colors hover:text-primary">
+          </Link>
+          <Link to="/mobile" className="transition-colors hover:text-primary">
             Mobile App
-          </a>
+          </Link>
         </nav>
 
         {/* User Menu & Mobile Toggle */}
@@ -87,11 +89,11 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/profile')}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
@@ -119,27 +121,27 @@ export function Header() {
       {isMenuOpen && (
         <div className="md:hidden border-t bg-background">
           <nav className="container flex flex-col space-y-2 p-4">
-            <a href="/" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
               Dashboard
-            </a>
-            <a href="#meal-plans" className="text-sm font-medium transition-colors hover:text-primary">
+            </Link>
+            <Link to="/planning" className="text-sm font-medium transition-colors hover:text-primary">
               Meal Plans
-            </a>
-            <a href="/recipes" className="text-sm font-medium transition-colors hover:text-primary">
+            </Link>
+            <Link to="/recipes" className="text-sm font-medium transition-colors hover:text-primary">
               Recipes
-            </a>
-            <a href="/planning" className="text-sm font-medium transition-colors hover:text-primary">
+            </Link>
+            <Link to="/planning" className="text-sm font-medium transition-colors hover:text-primary">
               Planning
-            </a>
-            <a href="/community" className="text-sm font-medium transition-colors hover:text-primary">
+            </Link>
+            <Link to="/community" className="text-sm font-medium transition-colors hover:text-primary">
               Community
-            </a>
-            <a href="/food-database" className="text-sm font-medium transition-colors hover:text-primary">
+            </Link>
+            <Link to="/food-database" className="text-sm font-medium transition-colors hover:text-primary">
               Food Database
-            </a>
-            <a href="/mobile" className="text-sm font-medium transition-colors hover:text-primary">
+            </Link>
+            <Link to="/mobile" className="text-sm font-medium transition-colors hover:text-primary">
               Mobile App
-            </a>
+            </Link>
           </nav>
         </div>
       )}
