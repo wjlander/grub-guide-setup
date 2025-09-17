@@ -4,9 +4,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -22,9 +23,7 @@ serve(async (req) => {
       throw new Error('Missing required environment variables');
     }
 
-    // Always use service role client - no user auth required for OAuth flow
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
     const url = new URL(req.url);
     const { searchParams } = url;
 
@@ -91,7 +90,7 @@ serve(async (req) => {
         <!DOCTYPE html>
         <html>
         <head>
-          <title>Fitbit Connected</title>
+          <title>Fitbit Connected Successfully</title>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <style>
@@ -157,6 +156,15 @@ serve(async (req) => {
                 }
               }
             }, 1000);
+            
+            // Also try to communicate with parent window
+            try {
+              if (window.opener) {
+                window.opener.postMessage({ type: 'FITBIT_AUTH_SUCCESS' }, '*');
+              }
+            } catch (e) {
+              console.log('Could not communicate with parent window');
+            }
           </script>
         </body>
         </html>
@@ -170,12 +178,11 @@ serve(async (req) => {
 
     // Handle POST request to generate OAuth URL
     if (req.method === 'POST') {
-      // For POST requests, we need to validate the user is authenticated
       const authHeader = req.headers.get('Authorization');
       if (!authHeader) {
         return new Response(JSON.stringify({ 
           success: false, 
-          error: 'Authorization header required for POST requests' 
+          error: 'Authorization header required' 
         }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -199,7 +206,6 @@ serve(async (req) => {
         `state=${userId}`;
 
       console.log('Generated Fitbit auth URL for user:', userId);
-      console.log('Redirect URI:', redirectUri);
 
       return new Response(JSON.stringify({ 
         success: true, 
