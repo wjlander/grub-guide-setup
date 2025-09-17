@@ -62,11 +62,71 @@ export function FitbitIntegration() {
       return;
     }
 
-    // For now, show setup instructions instead of attempting OAuth
-    toast({
-      title: "Fitbit Integration Setup",
-      description: "Fitbit integration requires additional server configuration. Please contact your administrator.",
-    });
+    setIsConnecting(true);
+    try {
+      // Get auth URL from our edge function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fitbit-oauth-start`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get Fitbit auth URL');
+      }
+
+      const { authUrl } = await response.json();
+      
+      // Open popup for OAuth
+      const popup = window.open(
+        authUrl,
+        'fitbit-auth',
+        'width=600,height=700,scrollbars=yes,resizable=yes'
+      );
+
+      if (!popup) {
+        throw new Error('Popup blocked. Please allow popups for this site.');
+      }
+
+      // Listen for popup messages
+      const handleMessage = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+        
+        if (event.data.type === 'FITBIT_AUTH_SUCCESS') {
+          window.removeEventListener('message', handleMessage);
+          toast({
+            title: "Fitbit Connected!",
+            description: "Your Fitbit account has been successfully connected.",
+          });
+          checkFitbitConnection();
+        } else if (event.data.type === 'FITBIT_AUTH_ERROR') {
+          window.removeEventListener('message', handleMessage);
+          toast({
+            title: "Connection Failed",
+            description: event.data.error || "Failed to connect to Fitbit.",
+            variant: "destructive",
+          });
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      toast({
+        title: "Fitbit Integration Setup",
+        description: "Please complete the authorization in the popup window.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to start Fitbit connection process.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const disconnectFitbit = async () => {
@@ -211,11 +271,20 @@ export function FitbitIntegration() {
 
             <Button 
               onClick={connectToFitbit} 
-              disabled={true}
-              className="w-full bg-muted text-muted-foreground cursor-not-allowed"
+             disabled={isConnecting}
+             className="w-full bg-[#00B2A9] hover:bg-[#00B2A9]/90 text-white"
             >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Connect to Fitbit (Setup Required)
+             {isConnecting ? (
+               <>
+                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                 Connecting...
+               </>
+             ) : (
+               <>
+                 <ExternalLink className="mr-2 h-4 w-4" />
+                 Connect to Fitbit
+               </>
+             )}
             </Button>
           </div>
         )}
