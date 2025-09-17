@@ -7,182 +7,267 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
-Deno.serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+serve(async (req) => {
   try {
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
     const fitbitClientId = Deno.env.get('FITBIT_CLIENT_ID');
     const fitbitClientSecret = Deno.env.get('FITBIT_CLIENT_SECRET');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!fitbitClientId || !fitbitClientSecret || !supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Missing required environment variables');
+      console.error('Missing environment variables');
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Server configuration error' 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
+    // Always use service role client to avoid auth issues
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const url = new URL(req.url);
     const { searchParams } = url;
 
     // Handle OAuth callback (GET request with code parameter)
     if (req.method === 'GET' && searchParams.has('code')) {
+      console.log('Processing Fitbit OAuth callback');
+      
       const authCode = searchParams.get('code');
       const state = searchParams.get('state'); // Contains user_id
       
-      console.log('Processing Fitbit OAuth callback for user:', state);
-
       if (!authCode || !state) {
-        throw new Error('Missing authorization code or state parameter');
+        console.error('Missing authorization code or state parameter');
+        return new Response('Missing authorization code or state parameter', {
+          status: 400,
+          headers: corsHeaders,
+        });
       }
+
+      console.log('Auth code received, exchanging for tokens...');
 
       const redirectUri = `${supabaseUrl}/functions/v1/fitbit-auth`;
 
-      // Exchange authorization code for access token
-      const tokenResponse = await fetch('https://api.fitbit.com/oauth2/token', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${btoa(`${fitbitClientId}:${fitbitClientSecret}`)}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          client_id: fitbitClientId,
-          grant_type: 'authorization_code',
-          redirect_uri: redirectUri,
-          code: authCode,
-        }).toString(),
-      });
-
-      if (!tokenResponse.ok) {
-        const errorText = await tokenResponse.text();
-        console.error('Token exchange failed:', errorText);
-        throw new Error(`Token exchange failed: ${tokenResponse.status} - ${errorText}`);
-      }
-
-      const tokenData = await tokenResponse.json();
-      console.log('Token exchange successful, storing tokens for user:', state);
-      
-      // Store Fitbit tokens in user profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: state,
-          fitbit_access_token: tokenData.access_token,
-          fitbit_refresh_token: tokenData.refresh_token,
-          fitbit_user_id: tokenData.user_id,
-          fitbit_connected_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id'
+      try {
+        // Exchange authorization code for access token
+        const tokenResponse = await fetch('https://api.fitbit.com/oauth2/token', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${btoa(`${fitbitClientId}:${fitbitClientSecret}`)}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            client_id: fitbitClientId,
+            grant_type: 'authorization_code',
+            redirect_uri: redirectUri,
+            code: authCode,
+          }).toString(),
         });
 
-      if (updateError) {
-        console.error('Error storing Fitbit tokens:', updateError);
-        throw updateError;
-      }
+        if (!tokenResponse.ok) {
+          const errorText = await tokenResponse.text();
+          console.error('Token exchange failed:', errorText);
+          throw new Error(`Token exchange failed: ${tokenResponse.status}`);
+        }
 
-      console.log('Fitbit integration successful for user:', state);
+        const tokenData = await tokenResponse.json();
+        console.log('Token exchange successful, storing tokens...');
+        
+        // Store Fitbit tokens in user profile using service role
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .upsert({
+            user_id: state,
+            fitbit_access_token: tokenData.access_token,
+            fitbit_refresh_token: tokenData.refresh_token,
+            fitbit_user_id: tokenData.user_id,
+            fitbit_connected_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'user_id'
+          });
 
-      // Return success page HTML
-      const successHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Fitbit Connected Successfully</title>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <style>
-            body { 
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              text-align: center; 
-              padding: 50px 20px; 
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              margin: 0;
-              min-height: 100vh;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            .container {
-              max-width: 400px;
-              background: white;
-              padding: 40px 30px;
-              border-radius: 15px;
-              box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            }
-            .success { 
-              color: #22c55e; 
-              font-size: 28px; 
-              margin-bottom: 20px; 
-            }
-            .message {
-              color: #374151;
-              font-size: 16px;
-              line-height: 1.5;
-              margin-bottom: 20px;
-            }
-            .countdown {
-              color: #6b7280;
-              font-size: 14px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="success">✅ Success!</div>
-            <div class="message">
-              <strong>Your Fitbit account has been connected!</strong><br>
-              You can now close this window and return to the UK Meal Planner app.
+        if (updateError) {
+          console.error('Error storing Fitbit tokens:', updateError);
+          throw updateError;
+        }
+
+        console.log('Fitbit integration successful');
+
+        // Return success page HTML
+        const successHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Fitbit Connected Successfully</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+              body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                text-align: center; 
+                padding: 50px 20px; 
+                background: linear-gradient(135deg, #00B2A9 0%, #00A099 100%);
+                margin: 0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .container {
+                max-width: 400px;
+                background: white;
+                padding: 40px 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+              }
+              .success { 
+                color: #22c55e; 
+                font-size: 28px; 
+                margin-bottom: 20px; 
+              }
+              .message {
+                color: #374151;
+                font-size: 16px;
+                line-height: 1.5;
+                margin-bottom: 20px;
+              }
+              .countdown {
+                color: #6b7280;
+                font-size: 14px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="success">✅ Success!</div>
+              <div class="message">
+                <strong>Your Fitbit account has been connected!</strong><br>
+                You can now close this window and return to the UK Meal Planner app.
+              </div>
+              <div class="countdown">This window will close automatically in <span id="timer">3</span> seconds...</div>
             </div>
-            <div class="countdown">This window will close automatically in <span id="timer">5</span> seconds...</div>
-          </div>
-          <script>
-            let countdown = 5;
-            const timer = document.getElementById('timer');
-            
-            const interval = setInterval(() => {
-              countdown--;
-              if (timer) timer.textContent = countdown.toString();
+            <script>
+              let countdown = 3;
+              const timer = document.getElementById('timer');
               
-              if (countdown <= 0) {
-                clearInterval(interval);
+              const interval = setInterval(() => {
+                countdown--;
+                if (timer) timer.textContent = countdown.toString();
+                
+                if (countdown <= 0) {
+                  clearInterval(interval);
+                  try {
+                    // Try to communicate with parent window first
+                    if (window.opener) {
+                      window.opener.postMessage({ type: 'FITBIT_AUTH_SUCCESS' }, '*');
+                    }
+                    window.close();
+                  } catch (e) {
+                    console.log('Could not close window automatically');
+                    if (timer && timer.parentElement) {
+                      timer.parentElement.textContent = 'Please close this window manually.';
+                    }
+                  }
+                }
+              }, 1000);
+            </script>
+          </body>
+          </html>
+        `;
+        
+        return new Response(successHtml, {
+          headers: { ...corsHeaders, 'Content-Type': 'text/html' },
+          status: 200,
+        });
+
+      } catch (tokenError) {
+        console.error('Token exchange error:', tokenError);
+        
+        const errorHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Fitbit Connection Failed</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+              body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                text-align: center; 
+                padding: 50px 20px; 
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                margin: 0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .container {
+                max-width: 400px;
+                background: white;
+                padding: 40px 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+              }
+              .error { 
+                color: #ef4444; 
+                font-size: 28px; 
+                margin-bottom: 20px; 
+              }
+              .message {
+                color: #374151;
+                font-size: 16px;
+                line-height: 1.5;
+                margin-bottom: 20px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="error">❌ Connection Failed</div>
+              <div class="message">
+                <strong>Failed to connect your Fitbit account.</strong><br>
+                Please close this window and try again.
+              </div>
+            </div>
+            <script>
+              setTimeout(() => {
                 try {
+                  if (window.opener) {
+                    window.opener.postMessage({ type: 'FITBIT_AUTH_ERROR' }, '*');
+                  }
                   window.close();
                 } catch (e) {
                   console.log('Could not close window automatically');
-                  if (timer) timer.parentElement.textContent = 'Please close this window manually.';
                 }
-              }
-            }, 1000);
-            
-            // Also try to communicate with parent window
-            try {
-              if (window.opener) {
-                window.opener.postMessage({ type: 'FITBIT_AUTH_SUCCESS' }, '*');
-              }
-            } catch (e) {
-              console.log('Could not communicate with parent window');
-            }
-          </script>
-        </body>
-        </html>
-      `;
-      
-      return new Response(successHtml, {
-        headers: { ...corsHeaders, 'Content-Type': 'text/html' },
-        status: 200,
-      });
+              }, 3000);
+            </script>
+          </body>
+          </html>
+        `;
+        
+        return new Response(errorHtml, {
+          headers: { ...corsHeaders, 'Content-Type': 'text/html' },
+          status: 200,
+        });
+      }
     }
 
     // Handle POST request to generate OAuth URL
     if (req.method === 'POST') {
+      // For POST requests, we need authentication
       const authHeader = req.headers.get('Authorization');
       if (!authHeader) {
         return new Response(JSON.stringify({ 
           success: false, 
-          error: 'Authorization header required' 
+          error: 'Authorization header required for generating auth URL' 
         }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -192,7 +277,13 @@ Deno.serve(async (req) => {
       const { userId } = await req.json();
       
       if (!userId) {
-        throw new Error('User ID is required');
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'User ID is required' 
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       const redirectUri = `${supabaseUrl}/functions/v1/fitbit-auth`;
