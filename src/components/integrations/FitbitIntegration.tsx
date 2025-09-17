@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Activity, Heart, Scale, Zap, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
+import { Activity, Heart, Scale, Zap, ExternalLink, CheckCircle, AlertCircle, Info } from 'lucide-react';
 
 interface FitbitProfile {
   fitbit_access_token?: string;
@@ -62,88 +62,11 @@ export function FitbitIntegration() {
       return;
     }
 
-    setIsConnecting(true);
-    
-    try {
-      // Get auth URL from our edge function
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fitbit-auth`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.id }),
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to generate auth URL');
-      }
-
-      // Open Fitbit auth in popup
-      const popup = window.open(
-        data.authUrl,
-        'fitbit-auth',
-        'width=600,height=700,scrollbars=yes,resizable=yes,location=yes,status=yes'
-      );
-
-      if (!popup) {
-        toast({
-          title: "Popup Blocked",
-          description: "Please allow popups for this site and try again.",
-          variant: "destructive",
-        });
-        setIsConnecting(false);
-        return;
-      }
-
-      // Listen for popup completion
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkClosed);
-          setIsConnecting(false);
-          // Check connection status after popup closes
-          setTimeout(checkFitbitConnection, 1000);
-        }
-      }, 1000);
-
-      // Listen for success message from popup
-      const messageListener = (event: MessageEvent) => {
-        if (event.data?.type === 'FITBIT_AUTH_SUCCESS') {
-          clearInterval(checkClosed);
-          popup.close();
-          setIsConnecting(false);
-          checkFitbitConnection();
-          toast({
-            title: "Fitbit Connected!",
-            description: "Your Fitbit account has been successfully connected.",
-          });
-          window.removeEventListener('message', messageListener);
-        }
-      };
-
-      window.addEventListener('message', messageListener);
-
-      // Cleanup after 5 minutes
-      setTimeout(() => {
-        clearInterval(checkClosed);
-        window.removeEventListener('message', messageListener);
-        if (!popup.closed) {
-          popup.close();
-        }
-        setIsConnecting(false);
-      }, 300000);
-
-    } catch (error: any) {
-      console.error('Fitbit connection error:', error);
-      toast({
-        title: "Connection Failed",
-        description: error.message || "Failed to connect to Fitbit. Please try again.",
-        variant: "destructive",
-      });
-      setIsConnecting(false);
-    }
+    // For now, show setup instructions instead of attempting OAuth
+    toast({
+      title: "Fitbit Integration Setup",
+      description: "Fitbit integration requires additional server configuration. Please contact your administrator.",
+    });
   };
 
   const disconnectFitbit = async () => {
@@ -176,49 +99,6 @@ export function FitbitIntegration() {
       toast({
         title: "Error",
         description: "Failed to disconnect Fitbit account.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const testFitbitConnection = async () => {
-    if (!user || !isConnected) return;
-
-    try {
-      const testMealData = {
-        name: "Test Meal",
-        calories: 300,
-        mealType: "lunch",
-        servings: 1,
-        date: new Date().toISOString().split('T')[0],
-      };
-
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fitbit-log-meal`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          mealData: testMealData,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast({
-          title: "Connection Test Successful",
-          description: "Test meal logged to Fitbit successfully!",
-        });
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (error: any) {
-      toast({
-        title: "Connection Test Failed",
-        description: error.message || "Failed to test Fitbit connection.",
         variant: "destructive",
       });
     }
@@ -305,9 +185,6 @@ export function FitbitIntegration() {
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" onClick={testFitbitConnection} className="flex-1">
-                Test Connection
-              </Button>
               <Button variant="outline" onClick={disconnectFitbit} className="flex-1">
                 Disconnect
               </Button>
@@ -316,9 +193,9 @@ export function FitbitIntegration() {
         ) : (
           <div className="space-y-4">
             <Alert>
-              <AlertCircle className="h-4 w-4" />
+              <Info className="h-4 w-4" />
               <AlertDescription>
-                Connect your Fitbit account to automatically sync your meal data and nutrition tracking.
+                Fitbit integration requires additional server configuration with OAuth credentials. Contact your administrator to enable this feature.
               </AlertDescription>
             </Alert>
 
@@ -334,20 +211,11 @@ export function FitbitIntegration() {
 
             <Button 
               onClick={connectToFitbit} 
-              disabled={isConnecting}
-              className="w-full bg-[#00B2A9] hover:bg-[#00A099] text-white"
+              disabled={true}
+              className="w-full bg-muted text-muted-foreground cursor-not-allowed"
             >
-              {isConnecting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Connect to Fitbit
-                </>
-              )}
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Connect to Fitbit (Setup Required)
             </Button>
           </div>
         )}
